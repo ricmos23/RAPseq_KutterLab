@@ -23,7 +23,7 @@ knitr::opts_chunk$set(collapse = TRUE)
 # @Date: 2 Sep 2024 ( 10:40:08 )
 ###
 rm(list = ls())
-setwd("/Users/liqun/Desktop/Projects/RAPseq/AnalysisQun/")
+#setwd("/Users/liqun/Desktop/Projects/RAPseq/AnalysisQun/")
 ```
 
 ## R libraries
@@ -90,11 +90,11 @@ oranges <- c( "#A15000", "#CE7012", "#E47B12", "#F07D09", "#FF8B15", "#FFA141",
 ## Load data
 ```{r load data}
 # RAP data
-HUR <- read.table("./Data/RAPseq/annotated/hsHuRHUMAN.peaks.txt", 
+HUR <- read.table("./Data/Benchmarking/RAPseq/annotated/hsHuRHUMAN.peaks.txt", 
                   stringsAsFactors = F, header = T)
-PTBP1 <- read.table("./Data/RAPseq/annotated/PTBP1.peaks.txt", 
+PTBP1 <- read.table("./Data/Benchmarking/RAPseq/annotated/PTBP1.peaks.txt", 
                     stringsAsFactors = F, header = T)
-HUR_PTBP1 <- read.table("./Data/RAPseq/annotated/HuRPTBP1.peaks.txt", 
+HUR_PTBP1 <- read.table("./Data/Benchmarking/RAPseq/annotated/HuRPTBP1.peaks.txt", 
                         stringsAsFactors = F, header = T)
 print(nrow(HUR))
 print(nrow(PTBP1))
@@ -785,7 +785,7 @@ GO_plot <- ggplot2::ggplot(data=GOs, aes(x=Description, y=1)) +
         axis.ticks.x = element_blank(),
   )
 
-# write.csv(GOs, "./Data/GOs.csv")
+# write.csv(GOs, "./Data/Benchmarking/GOs.csv")
 
 #pdf("./Figure/Figure4/FigureS4F.pdf", width = 9, height = 8)
 GO_plot
