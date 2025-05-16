@@ -24,7 +24,7 @@ knitr::opts_chunk$set(collapse = TRUE)
 ###
 
 rm(list = ls())
-setwd("/Users/liqun/Desktop/Projects/RAPseq/0_RAPSeq/")
+#setwd("/Users/liqun/Desktop/Projects/RAPseq/0_RAPSeq/")
 ```
 
 ## R libraries
@@ -102,7 +102,7 @@ oranges <- c( "#A15000", "#CE7012", "#E47B12", "#F07D09", "#FF8B15", "#FFA141","
 # YBX3, accession ENCFF185OEI
 
 # annotated data
-PATH_eCLIP_ann <- "./Data/eCLIP/annotated/"
+PATH_eCLIP_ann <- "./Data/Benchmarking/eCLIP/annotated/"
 PEAKS_eCLIP_ann <- list.files(path = PATH_eCLIP_ann)
 Names_eCLIP_ann <- unlist(str_split(PEAKS_eCLIP_ann,"\\.p"))[grep("txt",unlist(str_split(PEAKS_eCLIP_ann,"\\.p")), invert = T)]
 CLIPs <- list()
@@ -113,7 +113,7 @@ names(CLIPs) <- Names_eCLIP_ann
 
 
 # PFMs
-PATH_eCLIP_PFMs <- "./Data/eCLIP/PFMs/"
+PATH_eCLIP_PFMs <- "./Data/Benchmarking/eCLIP/PFMs/"
 PEAKS_eCLIP_PFMs <- list.files(path = PATH_eCLIP_PFMs)
 Names_eCLIP <- unlist(str_split(PEAKS_eCLIP_PFMs,"\\."))[grep("txt",unlist(str_split(PEAKS_eCLIP_PFMs,"\\.")),invert = T)]
 eCLIPseq <- list()
@@ -151,7 +151,7 @@ eCLIP_logo
 # PTBP1: https://hugheslab.ccbr.utoronto.ca/supplementary-data/RNAcompete_eukarya/Experiment_reports/RNCMPT00269/RNCMPT00269_report.html
 #		     https://hugheslab.ccbr.utoronto.ca/supplementary-data/RNAcompete_eukarya/Experiment_reports/RNCMPT00268/RNCMPT00268_report.html
 		 
-PATH_RNACompete <- "./Data/RNAcompete/"
+PATH_RNACompete <- "./Data/Benchmarking/RNAcompete/"
 PEAKS_RNACompete <- list.files(path = PATH_RNACompete)
 Names_RNACompete <- unlist(str_split(PEAKS_RNACompete,"\\."))[grep("txt",unlist(str_split(PEAKS_RNACompete,"\\.")),invert = T)]
 RNACompete <- list()
@@ -184,7 +184,7 @@ RNA_Compete_logo
 ### RAPSeq
 ```{r RAP Seq}
 ############################    RAP SEQ    #################################
-PATH_RAP_ann <- "./Data/RAPseq/annotated/"
+PATH_RAP_ann <- "./Data/Benchmarking/RAPseq/annotated/"
 PEAKS_RAP_ann <- list.files(path = PATH_RAP_ann)
 Names_RAP <- unlist(str_split(PEAKS_RAP_ann,"\\.p"))[grep("txt",unlist(str_split(PEAKS_RAP_ann,"\\.p")), invert = T)]
 RAPs <- list()
@@ -211,7 +211,7 @@ GMAUG <- cbind(GMAUG,c(0,0,0,0),c(0,0,0,0))
 
 GMAUG_logo <- ggplot() + geom_logo(GMAUG, font="helvetica_bold") + theme_classic() + ylim(0,2)
 
-PATH_RAP_PFMs <- "./Data/RAPseq/PFMs/"
+PATH_RAP_PFMs <- "./Data/Benchmarking/RAPseq/PFMs/"
 PEAKS_RAP_PFMs <- list.files(path = PATH_RAP_PFMs)
 Names_RAP_PFMs <- unlist(str_split(PEAKS_RAP_PFMs,"\\."))[grep("txt",unlist(str_split(PEAKS_RAP_PFMs,"\\.")),invert = T)]
 RAPseq <- list()
@@ -297,7 +297,7 @@ boxplot(data=HNRNPC_Us_data[HNRNPC_Us_data$Assay == "CLIP",], MeanFC~Us, outline
 ## DeepTools was used with the following command to generate the per nt count matrices
 ## computeMatrix reference-point -S rep1.bw -R rep1.bed -a 100 -b 100 -bs 10
 ## RAPseq
-PATH_RAP_Coverage <- "./Data/RAPseq/Coverage/10nt/"
+PATH_RAP_Coverage <- "./Data/Benchmarking/RAPseq/Coverage/10nt/"
 PEAKS_RAP_Coverage <- list.files(path = PATH_RAP_Coverage)
 Names_RAP_Coverage <- unlist(str_split(PEAKS_RAP_Coverage,"\\.matr"))[grep("txt",unlist(str_split(PEAKS_RAP_Coverage,"\\.matr")),invert = T)]
 RAPseq_Coverage <- list()
@@ -351,7 +351,7 @@ for (i in 1:length(Names_protein)){
 ## DeepTools count matrices (bin size = 10nt) are read in
 ## DeepTools was used with the following command to generate the per nt count matrices
 ## computeMatrix reference-point -S rep1.bw -R rep1.bed -a 100 -b 100 -bs 10
-PATH_eCLIP_Coverage <- "./Data/eCLIP/Coverage/10nt/"
+PATH_eCLIP_Coverage <- "./Data/Benchmarking/eCLIP/Coverage/10nt/"
 PEAKS_eCLIP_Coverage <- list.files(path = PATH_eCLIP_Coverage)
 Names_eCLIP_Coverage <- unlist(str_split(PEAKS_eCLIP_Coverage,"\\.matr"))[grep("txt",unlist(str_split(PEAKS_eCLIP_Coverage,"\\.matr")),invert = T)]
 CLIPseq_Coverage <- list()
