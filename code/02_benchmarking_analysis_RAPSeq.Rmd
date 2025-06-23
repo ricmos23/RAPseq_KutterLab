@@ -24,7 +24,7 @@ knitr::opts_chunk$set(collapse = TRUE)
 ###
 
 rm(list = ls())
-#setwd("/Users/liqun/Desktop/Projects/RAPseq/0_RAPSeq/")
+setwd("/Users/liqun/Desktop/Projects/RAPseq/0_RAPSeq/")
 ```
 
 ## R libraries
@@ -102,7 +102,7 @@ oranges <- c( "#A15000", "#CE7012", "#E47B12", "#F07D09", "#FF8B15", "#FFA141","
 # YBX3, accession ENCFF185OEI
 
 # annotated data
-PATH_eCLIP_ann <- "./Data/Benchmarking/eCLIP/annotated/"
+PATH_eCLIP_ann <- "./Data/eCLIP/annotated/"
 PEAKS_eCLIP_ann <- list.files(path = PATH_eCLIP_ann)
 Names_eCLIP_ann <- unlist(str_split(PEAKS_eCLIP_ann,"\\.p"))[grep("txt",unlist(str_split(PEAKS_eCLIP_ann,"\\.p")), invert = T)]
 CLIPs <- list()
@@ -113,7 +113,7 @@ names(CLIPs) <- Names_eCLIP_ann
 
 
 # PFMs
-PATH_eCLIP_PFMs <- "./Data/Benchmarking/eCLIP/PFMs/"
+PATH_eCLIP_PFMs <- "./Data/eCLIP/PFMs/"
 PEAKS_eCLIP_PFMs <- list.files(path = PATH_eCLIP_PFMs)
 Names_eCLIP <- unlist(str_split(PEAKS_eCLIP_PFMs,"\\."))[grep("txt",unlist(str_split(PEAKS_eCLIP_PFMs,"\\.")),invert = T)]
 eCLIPseq <- list()
@@ -151,7 +151,7 @@ eCLIP_logo
 # PTBP1: https://hugheslab.ccbr.utoronto.ca/supplementary-data/RNAcompete_eukarya/Experiment_reports/RNCMPT00269/RNCMPT00269_report.html
 #		     https://hugheslab.ccbr.utoronto.ca/supplementary-data/RNAcompete_eukarya/Experiment_reports/RNCMPT00268/RNCMPT00268_report.html
 		 
-PATH_RNACompete <- "./Data/Benchmarking/RNAcompete/"
+PATH_RNACompete <- "./Data/RNAcompete/"
 PEAKS_RNACompete <- list.files(path = PATH_RNACompete)
 Names_RNACompete <- unlist(str_split(PEAKS_RNACompete,"\\."))[grep("txt",unlist(str_split(PEAKS_RNACompete,"\\.")),invert = T)]
 RNACompete <- list()
@@ -184,7 +184,7 @@ RNA_Compete_logo
 ### RAPSeq
 ```{r RAP Seq}
 ############################    RAP SEQ    #################################
-PATH_RAP_ann <- "./Data/Benchmarking/RAPseq/annotated/"
+PATH_RAP_ann <- "./Data/RAPseq/annotated/"
 PEAKS_RAP_ann <- list.files(path = PATH_RAP_ann)
 Names_RAP <- unlist(str_split(PEAKS_RAP_ann,"\\.p"))[grep("txt",unlist(str_split(PEAKS_RAP_ann,"\\.p")), invert = T)]
 RAPs <- list()
@@ -211,7 +211,7 @@ GMAUG <- cbind(GMAUG,c(0,0,0,0),c(0,0,0,0))
 
 GMAUG_logo <- ggplot() + geom_logo(GMAUG, font="helvetica_bold") + theme_classic() + ylim(0,2)
 
-PATH_RAP_PFMs <- "./Data/Benchmarking/RAPseq/PFMs/"
+PATH_RAP_PFMs <- "./Data/RAPseq/PFMs/"
 PEAKS_RAP_PFMs <- list.files(path = PATH_RAP_PFMs)
 Names_RAP_PFMs <- unlist(str_split(PEAKS_RAP_PFMs,"\\."))[grep("txt",unlist(str_split(PEAKS_RAP_PFMs,"\\.")),invert = T)]
 RAPseq <- list()
@@ -297,7 +297,7 @@ boxplot(data=HNRNPC_Us_data[HNRNPC_Us_data$Assay == "CLIP",], MeanFC~Us, outline
 ## DeepTools was used with the following command to generate the per nt count matrices
 ## computeMatrix reference-point -S rep1.bw -R rep1.bed -a 100 -b 100 -bs 10
 ## RAPseq
-PATH_RAP_Coverage <- "./Data/Benchmarking/RAPseq/Coverage/10nt/"
+PATH_RAP_Coverage <- "./Data/RAPseq/Coverage/10nt/"
 PEAKS_RAP_Coverage <- list.files(path = PATH_RAP_Coverage)
 Names_RAP_Coverage <- unlist(str_split(PEAKS_RAP_Coverage,"\\.matr"))[grep("txt",unlist(str_split(PEAKS_RAP_Coverage,"\\.matr")),invert = T)]
 RAPseq_Coverage <- list()
@@ -351,7 +351,7 @@ for (i in 1:length(Names_protein)){
 ## DeepTools count matrices (bin size = 10nt) are read in
 ## DeepTools was used with the following command to generate the per nt count matrices
 ## computeMatrix reference-point -S rep1.bw -R rep1.bed -a 100 -b 100 -bs 10
-PATH_eCLIP_Coverage <- "./Data/Benchmarking/eCLIP/Coverage/10nt/"
+PATH_eCLIP_Coverage <- "./Data/eCLIP/Coverage/10nt/"
 PEAKS_eCLIP_Coverage <- list.files(path = PATH_eCLIP_Coverage)
 Names_eCLIP_Coverage <- unlist(str_split(PEAKS_eCLIP_Coverage,"\\.matr"))[grep("txt",unlist(str_split(PEAKS_eCLIP_Coverage,"\\.matr")),invert = T)]
 CLIPseq_Coverage <- list()
@@ -468,6 +468,8 @@ data_cors <- data.frame(cors,assay)
 data_cors$cors <- as.numeric(data_cors$cors)
 data_cors$assay <- as.factor(data_cors$assay)
 
+wilcox.test(data_cors[data_cors$assay == "aRAP",]$cors, data_cors[data_cors$assay == "eCLIP",]$cors)
+
 # plot
 set.seed(1)
 #pdf("./Figure/Figure2_F.pdf", width = 2.9, height = 5.3)
@@ -506,97 +508,95 @@ for (i in 1:length(Names_protein)){
   plot_area <- c(plot_area,length(unique(RAPs[[Names_protein[i]]]$gene_ID)) + common_RAPs_CLIPs)
   
   v <- euler(c(RAP=uniq_RAP, CLIP=uniq_CLIP, "RAP&CLIP"=common_RAPs_CLIPs))
-  venns[[i]] <- plot( v, fills=c(alpha("#1f78b4",0.7),alpha("#33a02c",0.7), "#f6e8c3"), main=Names_protein[i], quantities=TRUE, edges=F )
+  venns[[i]] <- plot( v, fills=c(alpha(acqua_greens[i*2],0.7),alpha(greys[i],0.7), yellows[i*2]), main=Names_protein[i], quantities=TRUE, edges=F )
 }
-#pdf("./Figure/Figure2G_Venn.pdf", width = 30, height = 12.6)
 grid.arrange(grobs = venns, widths=plot_area)
-#dev.off()
   
 # right
 # HNRNPA1_pval
 RAPs_HNRNPA1 <- unique(RAPs[["HNRNPA1"]][,c("gene_ID","Gene_BS")])
 CLIPs_HNRNPA1 <- unique(CLIPs[["HNRNPA1"]][,c("gene_ID","Gene_BS_CLIP")])
 RAPs_CLIPs_common_HNRNPA1 <- CLIPs_HNRNPA1[grep(paste(intersect(CLIPs_HNRNPA1$gene_ID,RAPs_HNRNPA1$gene_ID),collapse="|"),CLIPs_HNRNPA1$gene_ID),]
-RAPs_CLIPs_common_HNRNPA1$intersection <- rep("common",nrow(RAPs_CLIPs_common_HNRNPA1))
+RAPs_CLIPs_common_HNRNPA1$intersection <- rep("CLIP_common",nrow(RAPs_CLIPs_common_HNRNPA1))
 CLIPs_uniq_HNRNPA1 <- CLIPs_HNRNPA1[grep(paste(setdiff(CLIPs_HNRNPA1$gene_ID,RAPs_HNRNPA1$gene_ID),collapse="|"),CLIPs_HNRNPA1$gene_ID),]
-CLIPs_uniq_HNRNPA1$intersection <- rep("onlyCLIP",nrow(CLIPs_uniq_HNRNPA1))
+CLIPs_uniq_HNRNPA1$intersection <- rep("CLIP_uniq",nrow(CLIPs_uniq_HNRNPA1))
 CLIPS_common_uniq_HNRNPA1 <- rbind(RAPs_CLIPs_common_HNRNPA1,CLIPs_uniq_HNRNPA1)
 plot_HNRNPA1 <- ggplot( data = CLIPS_common_uniq_HNRNPA1, aes( x=intersection,y=log2(Gene_BS_CLIP) ) ) +
   geom_violin(aes(fill = intersection), bw=0.85, width=0.8) + 
-  scale_fill_manual(values = c("#f6e8c3", "#33a02c")) +
+  scale_fill_manual(values = c(yellows[2],greys[5])) +
   geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
   theme_pubr() +
   coord_cartesian(ylim=c(0,13))
 plot_HNRNPA1
-HNRNPA1_pval <- wilcox.test(RAPs_CLIPs_common_HNRNPA1$Gene_BS_CLIP,CLIPs_uniq_HNRNPA1$Gene_BS_CLIP, alternative = "greater")$p.value
+HNRNPA1_pval <- wilcox.test(RAPs_CLIPs_common_HNRNPA1$Gene_BS_CLIP,CLIPs_uniq_HNRNPA1$Gene_BS_CLIP)$p.value
 
 # HNRNPC_pval
 RAPs_HNRNPC <- unique(RAPs[["HNRNPC"]][,c("gene_ID","Gene_BS")])
 CLIPs_HNRNPC <- unique(CLIPs[["HNRNPC"]][,c("gene_ID","Gene_BS_CLIP")])
 RAPs_CLIPs_common_HNRNPC <- CLIPs_HNRNPC[grep(paste(intersect(CLIPs_HNRNPC$gene_ID,RAPs_HNRNPC$gene_ID),collapse="|"),CLIPs_HNRNPC$gene_ID),]
-RAPs_CLIPs_common_HNRNPC$intersection <- rep("common",nrow(RAPs_CLIPs_common_HNRNPC))
+RAPs_CLIPs_common_HNRNPC$intersection <- rep("CLIP_common",nrow(RAPs_CLIPs_common_HNRNPC))
 CLIPs_uniq_HNRNPC <- CLIPs_HNRNPC[grep(paste(setdiff(CLIPs_HNRNPC$gene_ID,RAPs_HNRNPC$gene_ID),collapse="|"),CLIPs_HNRNPC$gene_ID),]
-CLIPs_uniq_HNRNPC$intersection <- rep("onlyCLIP",nrow(CLIPs_uniq_HNRNPC))
+CLIPs_uniq_HNRNPC$intersection <- rep("CLIP_uniq",nrow(CLIPs_uniq_HNRNPC))
 CLIPS_common_uniq_HNRNPC <- rbind(RAPs_CLIPs_common_HNRNPC,CLIPs_uniq_HNRNPC)
 plot_HNRNPC <- ggplot( data = CLIPS_common_uniq_HNRNPC, aes( x=intersection,y=log2(Gene_BS_CLIP) ) ) +
   geom_violin(aes(fill = intersection), bw=0.85, width=0.8) + 
-  scale_fill_manual(values = c("#f6e8c3", "#33a02c")) +
+  scale_fill_manual(values = c(yellows[2],greys[5])) +
   geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
   theme_pubr() +
   coord_cartesian(ylim=c(0,13))
 plot_HNRNPC
-HNRNPC_pval <- wilcox.test(RAPs_CLIPs_common_HNRNPC$Gene_BS_CLIP,CLIPs_uniq_HNRNPC$Gene_BS_CLIP, alternative = "greater")$p.value 
+HNRNPC_pval <- wilcox.test(RAPs_CLIPs_common_HNRNPC$Gene_BS_CLIP,CLIPs_uniq_HNRNPC$Gene_BS_CLIP)$p.value 
 
 # PTBP1_pval
 RAPs_PTBP1 <- unique(RAPs[["PTBP1"]][,c("gene_ID","Gene_BS")])
 CLIPs_PTBP1 <- unique(CLIPs[["PTBP1"]][,c("gene_ID","Gene_BS_CLIP")])
 RAPs_CLIPs_common_PTBP1 <- CLIPs_PTBP1[grep(paste(intersect(CLIPs_PTBP1$gene_ID,RAPs_PTBP1$gene_ID),collapse="|"),CLIPs_PTBP1$gene_ID),]
-RAPs_CLIPs_common_PTBP1$intersection <- rep("common",nrow(RAPs_CLIPs_common_PTBP1))
+RAPs_CLIPs_common_PTBP1$intersection <- rep("CLIP_common",nrow(RAPs_CLIPs_common_PTBP1))
 CLIPs_uniq_PTBP1 <- CLIPs_PTBP1[grep(paste(setdiff(CLIPs_PTBP1$gene_ID,RAPs_PTBP1$gene_ID),collapse="|"),CLIPs_PTBP1$gene_ID),]
-CLIPs_uniq_PTBP1$intersection <- rep("onlyCLIP",nrow(CLIPs_uniq_PTBP1))
+CLIPs_uniq_PTBP1$intersection <- rep("CLIP_uniq",nrow(CLIPs_uniq_PTBP1))
 CLIPS_common_uniq_PTBP1 <- rbind(RAPs_CLIPs_common_PTBP1,CLIPs_uniq_PTBP1)
 plot_PTBP1 <- ggplot( data = CLIPS_common_uniq_PTBP1, aes( x=intersection,y=log2(Gene_BS_CLIP) ) ) +
   geom_violin(aes(fill = intersection), bw=0.85, width=0.8) + 
-  scale_fill_manual(values = c("#f6e8c3", "#33a02c")) +
+  scale_fill_manual(values = c(yellows[2],greys[5])) +
   geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
   theme_pubr() +
   coord_cartesian(ylim=c(0,13))
 plot_PTBP1
-PTBP1_pval <- wilcox.test(RAPs_CLIPs_common_PTBP1$Gene_BS_CLIP,CLIPs_uniq_PTBP1$Gene_BS_CLIP, alternative = "greater")$p.value
+PTBP1_pval <- wilcox.test(RAPs_CLIPs_common_PTBP1$Gene_BS_CLIP,CLIPs_uniq_PTBP1$Gene_BS_CLIP)$p.value
 
 # RBFOX2_pval
 RAPs_RBFOX2 <- unique(RAPs[["RBFOX2"]][,c("gene_ID","Gene_BS")])
 CLIPs_RBFOX2 <- unique(CLIPs[["RBFOX2"]][,c("gene_ID","Gene_BS_CLIP")])
 RAPs_CLIPs_common_RBFOX2 <- CLIPs_RBFOX2[grep(paste(intersect(CLIPs_RBFOX2$gene_ID,RAPs_RBFOX2$gene_ID),collapse="|"),CLIPs_RBFOX2$gene_ID),]
-RAPs_CLIPs_common_RBFOX2$intersection <- rep("common",nrow(RAPs_CLIPs_common_RBFOX2))
+RAPs_CLIPs_common_RBFOX2$intersection <- rep("CLIP_common",nrow(RAPs_CLIPs_common_RBFOX2))
 CLIPs_uniq_RBFOX2 <- CLIPs_RBFOX2[grep(paste(setdiff(CLIPs_RBFOX2$gene_ID,RAPs_RBFOX2$gene_ID),collapse="|"),CLIPs_RBFOX2$gene_ID),]
-CLIPs_uniq_RBFOX2$intersection <- rep("onlyCLIP",nrow(CLIPs_uniq_RBFOX2))
+CLIPs_uniq_RBFOX2$intersection <- rep("CLIP_uniq",nrow(CLIPs_uniq_RBFOX2))
 CLIPS_common_uniq_RBFOX2 <- rbind(RAPs_CLIPs_common_RBFOX2,CLIPs_uniq_RBFOX2)
 plot_RBFOX2 <- ggplot( data = CLIPS_common_uniq_RBFOX2, aes( x=intersection,y=log2(Gene_BS_CLIP) ) ) +
   geom_violin(aes(fill = intersection), bw=0.85, width=0.8) + 
-  scale_fill_manual(values = c("#f6e8c3", "#33a02c")) +
+  scale_fill_manual(values = c(yellows[2],greys[5])) +
   geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
   theme_pubr() +
   coord_cartesian(ylim=c(0,13))
 plot_RBFOX2
-RBFOX2_pval <- wilcox.test(RAPs_CLIPs_common_RBFOX2$Gene_BS_CLIP,CLIPs_uniq_RBFOX2$Gene_BS_CLIP, alternative = "greater")$p.value
+RBFOX2_pval <- wilcox.test(RAPs_CLIPs_common_RBFOX2$Gene_BS_CLIP,CLIPs_uniq_RBFOX2$Gene_BS_CLIP)$p.value
 
 # YBX3_pval
 RAPs_YBX3 <- unique(RAPs[["YBX3"]][,c("gene_ID","Gene_BS")])
 CLIPs_YBX3 <- unique(CLIPs[["YBX3"]][,c("gene_ID","Gene_BS_CLIP")])
 RAPs_CLIPs_common_YBX3 <- CLIPs_YBX3[grep(paste(intersect(CLIPs_YBX3$gene_ID,RAPs_YBX3$gene_ID),collapse="|"),CLIPs_YBX3$gene_ID),]
-RAPs_CLIPs_common_YBX3$intersection <- rep("common",nrow(RAPs_CLIPs_common_YBX3))
+RAPs_CLIPs_common_YBX3$intersection <- rep("CLIP_common",nrow(RAPs_CLIPs_common_YBX3))
 CLIPs_uniq_YBX3 <- CLIPs_YBX3[grep(paste(setdiff(CLIPs_YBX3$gene_ID,RAPs_YBX3$gene_ID),collapse="|"),CLIPs_YBX3$gene_ID),]
-CLIPs_uniq_YBX3$intersection <- rep("onlyCLIP",nrow(CLIPs_uniq_YBX3))
+CLIPs_uniq_YBX3$intersection <- rep("CLIP_uniq",nrow(CLIPs_uniq_YBX3))
 CLIPS_common_uniq_YBX3 <- rbind(RAPs_CLIPs_common_YBX3,CLIPs_uniq_YBX3)
 plot_YBX3 <- ggplot( data = CLIPS_common_uniq_YBX3, aes( x=intersection,y=log2(Gene_BS_CLIP) ) ) +
   geom_violin(aes(fill = intersection), bw=0.85, width=0.8) + 
-  scale_fill_manual(values = c("#f6e8c3", "#33a02c")) +
+  scale_fill_manual(values = c(yellows[2],greys[5])) +
   geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
   theme_pubr() +
   coord_cartesian(ylim=c(0,13))
 plot_YBX3
-YBX3_pval <- wilcox.test(RAPs_CLIPs_common_YBX3$Gene_BS_CLIP,CLIPs_uniq_YBX3$Gene_BS_CLIP, alternative = "greater")$p.value
+YBX3_pval <- wilcox.test(RAPs_CLIPs_common_YBX3$Gene_BS_CLIP,CLIPs_uniq_YBX3$Gene_BS_CLIP)$p.value
 
 # all
 print("Wilcoxon rank sum test p values")
@@ -608,7 +608,143 @@ print(paste("YBX3",YBX3_pval,sep=" "))
 
 p_figure_violin_2G <- ggarrange(plot_HNRNPA1,plot_HNRNPC,plot_PTBP1,plot_RBFOX2,plot_YBX3,nrow=5, common.legend = T)
 ggsave(filename = "./Figure/Figure2G_Violin.pdf", plot = p_figure_violin_2G, width = 4.7, height = 12.6)
+
+CLIPS_common_uniq_HNRNPA1 <- CLIPS_common_uniq_HNRNPA1[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+CLIPS_common_uniq_HNRNPC <- CLIPS_common_uniq_HNRNPC[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+CLIPS_common_uniq_PTBP1 <- CLIPS_common_uniq_PTBP1[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+CLIPS_common_uniq_RBFOX2 <- CLIPS_common_uniq_RBFOX2[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+CLIPS_common_uniq_YBX3 <- CLIPS_common_uniq_YBX3[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
 ```
+
+```{r figure2GCommonComparision}
+# HNRNPA1
+HNRNPA1_CLIPS_RAPS_Qun <- merge(RAPs_HNRNPA1, CLIPs_HNRNPA1, by = "gene_ID")
+colnames(HNRNPA1_CLIPS_RAPS_Qun) <- c("gene_ID", "RAP_common", "Gene_BS_CLIP")
+HNRNPA1_CLIPS_RAPS_Qun_long <- pivot_longer(
+  HNRNPA1_CLIPS_RAPS_Qun, 
+  cols = -gene_ID,
+  names_to = "Methods", 
+  values_to = "BS"
+)
+#CLIPS_common_uniq_HNRNPA1 <- CLIPS_common_uniq_HNRNPA1[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+colnames(CLIPS_common_uniq_HNRNPA1) <- c("gene_ID", "Methods", "BS")
+data_HNRNPA1_comparision_Qun <- rbind(HNRNPA1_CLIPS_RAPS_Qun_long, CLIPS_common_uniq_HNRNPA1)
+data_HNRNPA1_comparision_Qun <- data_HNRNPA1_comparision_Qun[data_HNRNPA1_comparision_Qun$Methods != "Gene_BS_CLIP",]
+data_HNRNPA1_comparision_Qun$Methods <- factor(data_HNRNPA1_comparision_Qun$Methods, levels = c("RAP_common", "CLIP_common", "CLIP_uniq"))
+plot_HNRNPA1 <- ggplot( data = data_HNRNPA1_comparision_Qun, aes( x=Methods,y=log2(BS) ) ) +
+  geom_violin(aes(fill = Methods), bw=0.85, width=0.8) + 
+  #scale_fill_manual(values = c(yellows[2],greys[5])) +
+  geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
+  theme_pubr() +
+  coord_cartesian(ylim=c(0,13))
+plot_HNRNPA1
+HNRNPA1_pval <- wilcox.test(HNRNPA1_CLIPS_RAPS_Qun$RAP_common,HNRNPA1_CLIPS_RAPS_Qun$Gene_BS_CLIP)$p.value
+
+# HNRNPC
+HNRNPC_CLIPS_RAPS_Qun <- merge(RAPs_HNRNPC, CLIPs_HNRNPC, by = "gene_ID")
+colnames(HNRNPC_CLIPS_RAPS_Qun) <- c("gene_ID", "RAP_common", "Gene_BS_CLIP")
+HNRNPC_CLIPS_RAPS_Qun_long <- pivot_longer(
+  HNRNPC_CLIPS_RAPS_Qun, 
+  cols = -gene_ID,
+  names_to = "Methods", 
+  values_to = "BS"
+)
+#CLIPS_common_uniq_HNRNPC <- CLIPS_common_uniq_HNRNPC[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+colnames(CLIPS_common_uniq_HNRNPC) <- c("gene_ID", "Methods", "BS")
+data_HNRNPC_comparision_Qun <- rbind(HNRNPC_CLIPS_RAPS_Qun_long, CLIPS_common_uniq_HNRNPC)
+data_HNRNPC_comparision_Qun <- data_HNRNPC_comparision_Qun[data_HNRNPC_comparision_Qun$Methods != "Gene_BS_CLIP",]
+data_HNRNPC_comparision_Qun$Methods <- factor(data_HNRNPC_comparision_Qun$Methods, levels = c("RAP_common", "CLIP_common", "CLIP_uniq"))
+plot_HNRNPC <- ggplot( data = data_HNRNPC_comparision_Qun, aes( x=Methods,y=log2(BS) ) ) +
+  geom_violin(aes(fill = Methods), bw=0.85, width=0.8) + 
+  #scale_fill_manual(values = c(yellows[2],greys[5])) +
+  geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
+  theme_pubr() +
+  coord_cartesian(ylim=c(0,13))
+plot_HNRNPC
+HNRNPC_pval <- wilcox.test(HNRNPC_CLIPS_RAPS_Qun$RAP_common,HNRNPC_CLIPS_RAPS_Qun$Gene_BS_CLIP)$p.value
+
+# PTBP1
+PTBP1_CLIPS_RAPS_Qun <- merge(RAPs_PTBP1, CLIPs_PTBP1, by = "gene_ID")
+colnames(PTBP1_CLIPS_RAPS_Qun) <- c("gene_ID", "RAP_common", "Gene_BS_CLIP")
+PTBP1_CLIPS_RAPS_Qun_long <- pivot_longer(
+  PTBP1_CLIPS_RAPS_Qun, 
+  cols = -gene_ID,
+  names_to = "Methods", 
+  values_to = "BS"
+)
+#CLIPS_common_uniq_PTBP1 <- CLIPS_common_uniq_PTBP1[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+colnames(CLIPS_common_uniq_PTBP1) <- c("gene_ID", "Methods", "BS")
+data_PTBP1_comparision_Qun <- rbind(PTBP1_CLIPS_RAPS_Qun_long, CLIPS_common_uniq_PTBP1)
+data_PTBP1_comparision_Qun <- data_PTBP1_comparision_Qun[data_PTBP1_comparision_Qun$Methods != "Gene_BS_CLIP",]
+data_PTBP1_comparision_Qun$Methods <- factor(data_PTBP1_comparision_Qun$Methods, levels = c("RAP_common", "CLIP_common", "CLIP_uniq"))
+plot_PTBP1 <- ggplot( data = data_PTBP1_comparision_Qun, aes( x=Methods,y=log2(BS) ) ) +
+  geom_violin(aes(fill = Methods), bw=0.85, width=0.8) + 
+  #scale_fill_manual(values = c(yellows[2],greys[5])) +
+  geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
+  theme_pubr() +
+  coord_cartesian(ylim=c(0,13))
+plot_PTBP1
+PTBP1_pval <- wilcox.test(PTBP1_CLIPS_RAPS_Qun$RAP_common,PTBP1_CLIPS_RAPS_Qun$Gene_BS_CLIP)$p.value
+
+# RBFOX2
+RBFOX2_CLIPS_RAPS_Qun <- merge(RAPs_RBFOX2, CLIPs_RBFOX2, by = "gene_ID")
+colnames(RBFOX2_CLIPS_RAPS_Qun) <- c("gene_ID", "RAP_common", "Gene_BS_CLIP")
+RBFOX2_CLIPS_RAPS_Qun_long <- pivot_longer(
+  RBFOX2_CLIPS_RAPS_Qun, 
+  cols = -gene_ID,
+  names_to = "Methods", 
+  values_to = "BS"
+)
+#CLIPS_common_uniq_RBFOX2 <- CLIPS_common_uniq_RBFOX2[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+colnames(CLIPS_common_uniq_RBFOX2) <- c("gene_ID", "Methods", "BS")
+data_RBFOX2_comparision_Qun <- rbind(RBFOX2_CLIPS_RAPS_Qun_long, CLIPS_common_uniq_RBFOX2)
+data_RBFOX2_comparision_Qun <- data_RBFOX2_comparision_Qun[data_RBFOX2_comparision_Qun$Methods != "Gene_BS_CLIP",]
+data_RBFOX2_comparision_Qun$Methods <- factor(data_RBFOX2_comparision_Qun$Methods, levels = c("RAP_common", "CLIP_common", "CLIP_uniq"))
+plot_RBFOX2 <- ggplot( data = data_RBFOX2_comparision_Qun, aes( x=Methods,y=log2(BS) ) ) +
+  geom_violin(aes(fill = Methods), bw=0.85, width=0.8) + 
+  #scale_fill_manual(values = c(yellows[2],greys[5])) +
+  geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
+  theme_pubr() +
+  coord_cartesian(ylim=c(0,13))
+plot_RBFOX2
+RBFOX2_pval <- wilcox.test(RBFOX2_CLIPS_RAPS_Qun$RAP_common,RBFOX2_CLIPS_RAPS_Qun$Gene_BS_CLIP)$p.value
+
+# YBX3
+YBX3_CLIPS_RAPS_Qun <- merge(RAPs_YBX3, CLIPs_YBX3, by = "gene_ID")
+colnames(YBX3_CLIPS_RAPS_Qun) <- c("gene_ID", "RAP_common", "Gene_BS_CLIP")
+YBX3_CLIPS_RAPS_Qun_long <- pivot_longer(
+  YBX3_CLIPS_RAPS_Qun, 
+  cols = -gene_ID,
+  names_to = "Methods", 
+  values_to = "BS"
+)
+#CLIPS_common_uniq_YBX3 <- CLIPS_common_uniq_YBX3[,c("gene_ID", "intersection", "Gene_BS_CLIP")]
+colnames(CLIPS_common_uniq_YBX3) <- c("gene_ID", "Methods", "BS")
+data_YBX3_comparision_Qun <- rbind(YBX3_CLIPS_RAPS_Qun_long, CLIPS_common_uniq_YBX3)
+data_YBX3_comparision_Qun <- data_YBX3_comparision_Qun[data_YBX3_comparision_Qun$Methods != "Gene_BS_CLIP",]
+data_YBX3_comparision_Qun$Methods <- factor(data_YBX3_comparision_Qun$Methods, levels = c("RAP_common", "CLIP_common", "CLIP_uniq"))
+plot_YBX3 <- ggplot( data = data_YBX3_comparision_Qun, aes( x=Methods,y=log2(BS) ) ) +
+  geom_violin(aes(fill = Methods), bw=0.85, width=0.8) + 
+  #scale_fill_manual(values = c(yellows[2],greys[5])) +
+  geom_boxplot(color="black", fill=NA, width = 0.2, outlier.shape = NA) + 
+  theme_pubr() +
+  coord_cartesian(ylim=c(0,13))
+plot_YBX3
+YBX3_pval <- wilcox.test(YBX3_CLIPS_RAPS_Qun$RAP_common,YBX3_CLIPS_RAPS_Qun$Gene_BS_CLIP)$p.value
+
+print("Wilcoxon rank sum test p values")
+print(paste("HNRNPA1",HNRNPA1_pval, sep=" "))
+print(paste("HNRNPC",HNRNPC_pval,sep=" "))
+print(paste("PTBP1",PTBP1_pval,sep=" "))
+print(paste("RBFOX2",RBFOX2_pval,sep=" "))
+print(paste("YBX3",YBX3_pval,sep=" "))
+
+p_figure_violin_2G <- ggarrange(plot_HNRNPA1,plot_HNRNPC,plot_PTBP1,plot_RBFOX2,plot_YBX3,nrow=5, common.legend = T)
+p_figure_violin_2G
+
+ggsave(filename = "./Figure/Figure2G_Violin_Qun.pdf", plot = p_figure_violin_2G, width = 4.7, height = 12.6)
+```
+
 
 ### Figure S2B
 ```{r Figure sup 2B}
@@ -635,7 +771,7 @@ GNWYG_scores <- GNWYG_scores[-1]
 
 for (i in names(GNWYG_scores)){
   anno_text_0 <- paste("GCAUG vs",i)
-  test_compare <- wilcox.test(GCAUG,GNWYG_scores[[i]], alternative = "greater")$p.value
+  test_compare <- wilcox.test(GCAUG,GNWYG_scores[[i]])$p.value
   anno_text <- paste("P-value =", test_compare)
   anno_text <- paste(anno_text_0,anno_text,sep=" ")
   print(anno_text)
@@ -700,7 +836,8 @@ for (i in GNWYG){
   n_neg <- nrow(RAPs[["PTBP1"]][grep(i,RAPs[["PTBP1"]]$positive_fa),])
   x_neg <- nrow(RAPs[["PTBP1"]][grep(i,str_sub(RAPs[["PTBP1"]]$positive_fa,80,120)),])
   p <- x_neg / n_neg
-  bt <- binom.test(x,n,p, alternative = "greater")
+  #bt <- binom.test(x,n,p, alternative = "greater")
+  bt <- binom.test(x,n,p)
   btp <- bt$p.value
   if ( btp <= 0.001 ) {
     to_add <- "***" 
@@ -768,7 +905,7 @@ boxplot2(RAPs_GNWYG_Mean_FCI~RAPs_GNWYG_count,outline=F,boxwex=0.95, ylab="Fold 
 
 x <- RAPs_GNWYG_Mean_FCI[RAPs_GNWYG_count == 1]
 y <- RAPs_GNWYG_Mean_FCI[RAPs_GNWYG_count == 2]
-rst <- t.test(x,y,alternative = "less")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -784,7 +921,7 @@ text(1.5,7.25,labels = to_add, cex=1.5)
 
 x <- RAPs_GNWYG_Mean_FCI[RAPs_GNWYG_count == 2]
 y <- RAPs_GNWYG_Mean_FCI[RAPs_GNWYG_count == 3]
-rst <- t.test(x,y,alternative = "less")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -800,7 +937,7 @@ text(2.5,7.5,labels = to_add, cex=1.5)
 
 x <- RAPs_GNWYG_Mean_FCI[RAPs_GNWYG_count == 3]
 y <- RAPs_GNWYG_Mean_FCI[RAPs_GNWYG_count == 4]
-rst <- t.test(x,y,alternative = "less")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -822,7 +959,7 @@ boxplot2(CLIPs_GNWYG_MeanFC~CLIPs_GNWYG_count,outline=F,boxwex=0.95, ylab="Fold 
 
 x <- CLIPs_GNWYG_MeanFC[CLIPs_GNWYG_count == 1]
 y <- CLIPs_GNWYG_MeanFC[CLIPs_GNWYG_count == 2]
-rst <- t.test(x,y,alternative = "less")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -838,7 +975,7 @@ text(1.5,7.25,labels = to_add, cex=1.5)
 
 x <- CLIPs_GNWYG_MeanFC[CLIPs_GNWYG_count == 2]
 y <- CLIPs_GNWYG_MeanFC[CLIPs_GNWYG_count == 3]
-rst <- t.test(x,y,alternative = "less")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -854,7 +991,7 @@ text(2.5,7.5,labels = to_add, cex=1.5)
 
 x <- CLIPs_GNWYG_MeanFC[CLIPs_GNWYG_count == 3]
 y <- CLIPs_GNWYG_MeanFC[CLIPs_GNWYG_count == 4]
-rst <- t.test(x,y,alternative = "less")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -919,7 +1056,7 @@ boxplot2(ALL_CAHCs_scores,outline=F, range=1, col= c("#1f78b4", "#6baed6", "#c6d
 
 x <- ALL_CAHCs_scores$AACATC
 y <- ALL_CAHCs_scores$ACATC
-rst <- t.test(x,y,alternative = "greater")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -933,7 +1070,7 @@ text(1.5,77.5,labels = to_add, cex=1.5)
 
 x <- ALL_CAHCs_scores$ACATC
 y <- ALL_CAHCs_scores$CATC
-rst <- t.test(x,y,alternative = "greater")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -949,7 +1086,7 @@ text(2.5,75,labels = to_add, cex=1.5)
 
 x <- ALL_CAHCs_scores$AACACC
 y <- ALL_CAHCs_scores$ACACC
-rst <- t.test(x,y,alternative = "greater")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -963,7 +1100,7 @@ text(4.5,77.5,labels = to_add, cex=1.5)
 
 x <- ALL_CAHCs_scores$ACACC
 y <- ALL_CAHCs_scores$CACC
-rst <- t.test(x,y,alternative = "greater")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -977,7 +1114,7 @@ text(5.5,75,labels = to_add, cex=1.5)
 
 x <- ALL_CAHCs_scores$AACAAC
 y <- ALL_CAHCs_scores$ACAAC
-rst <- t.test(x,y,alternative = "greater")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
@@ -991,7 +1128,7 @@ text(7.5,77.5,labels = to_add, cex=1.5)
 
 x <- ALL_CAHCs_scores$ACAAC
 y <- ALL_CAHCs_scores$CAAC
-rst <- t.test(x,y,alternative = "greater")$p.value
+rst <- wilcox.test(x,y)$p.value
 if ( rst <= 0.001 ) {
   to_add <- "***" 
 } else if ( rst <= 0.01 ) {
