@@ -316,7 +316,7 @@ text(x=2,y=median(HUR_PTBP1_HURPTBP1_overlaps_adjust)+9, label=median(HUR_PTBP1_
 text(x=4,y=median(PTBP1_HURPTBP1_overlaps_adjust)+9, label=median(PTBP1_HURPTBP1_overlaps_adjust), cex=1.5)
 text(x=5,y=median(HUR_PTBP1_PTBP1HUR_overlaps_adjust)+9, label=median(HUR_PTBP1_PTBP1HUR_overlaps_adjust), cex=1.5)
 
-pw <- wilcox.test(PTBP1_HURPTBP1_overlaps_adjust, HUR_PTBP1_PTBP1HUR_overlaps_adjust, alternative = "less")
+pw <- wilcox.test(PTBP1_HURPTBP1_overlaps_adjust, HUR_PTBP1_PTBP1HUR_overlaps_adjust)
 pwp <- pw$p.value
 if ( pwp <= 0.001 ) {
   to_add <- "***" 
@@ -329,7 +329,7 @@ if ( pwp <= 0.001 ) {
 }
 text(1.5,200,labels = to_add, cex=2.5)
 
-pw <- wilcox.test(HUR_HURPTBP1_overlaps_adjust, HUR_PTBP1_HURPTBP1_overlaps_adjust, alternative = "less")
+pw <- wilcox.test(HUR_HURPTBP1_overlaps_adjust, HUR_PTBP1_HURPTBP1_overlaps_adjust)
 pwp <- pw$p.value
 if ( pwp <= 0.001 ) {
   to_add <- "***" 
