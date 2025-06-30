@@ -148,7 +148,7 @@ all_RBP_peaks <- lapply(list.files("data/peaks/"), function(x) {
 # split canonical and noncanonical RBP peaks
 cRBP_peaks <- all_RBP_peaks %>% 
   filter(str_detect(RBP, "RBFOX|HSHUR|PTBP|IGF2BP|HNRNP|YBX|IRP1|YTHDF1")) %>%
-  filter(!str_detect(RBP, "HURPTBP1|IGF2BP1R|IGF2BP2B|IGF2BP3R|IGF2BP3I")) %>%
+  filter(!str_detect(RBP, "HURPTBP1|HSHURFISH|IGF2BP1R|IGF2BP2B|IGF2BP3R|IGF2BP3I")) %>%
   mutate(RBP = str_replace(RBP, "HSHURHUMAN", "HUR")) %>%
   mutate(RBP = str_replace(RBP, "IGF2BP1WT", "IGF2BP1")) %>%
   mutate(RBP = str_replace(RBP, "IGF2BP3WT", "IGF2BP3"))
