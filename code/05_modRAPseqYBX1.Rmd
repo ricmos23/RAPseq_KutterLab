@@ -1,0 +1,199 @@
+---
+title: "Figure 7 YBX1"
+author: "Riccardo Mosca"
+date: "2025-05-13"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+This markdown show how to generate Figure S5 
+
+Loading packages and required data: YBX1 metafile with binding sites of RAPseq Input and T7 input, generated in the script "YBX1_metafile_annotation
+
+```{r}
+library(eulerr)
+library(ggplot2)
+library(reshape2)
+library(gplots)
+library(tidyverse)
+library(ggpubr)
+library(dendextend)
+library(dplyr)
+library(gtools)
+library(corrplot)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(rrvgo)
+
+YBX1<- read.table(file="/Users/riccardomosca/Desktop/RAPseq_PAPER/PEAKs/ANNOTATED/T7_Fig5/Ybx1_T7_scored_annotated.txt", header=T, stringsAsFactors = F)
+head(YBX1)
+```
+
+Figure S7A
+```{r, message=FALSE, warning=FALSE,tidy=TRUE}
+# Only the RAPseq YBX1 binding sites are considered and compared with the signal on the T7RAPseq
+YBX1$T7input_signal[YBX1$T7Input_signal == 0] <- min(YBX1[YBX1$T7Input_signal != 0,"T7Input_signal"])
+YBX1$T7halo_signal[YBX1$T7halo_signal == 0] <- min(YBX1[YBX1$T7halo_signal != 0,"T7halo_signal"])
+
+
+
+
+RAP_enrichments <- YBX1$peak_ID
+T7RAP_enrichments <- YBX1[YBX1$T7Ybx1_rep1_signal/YBX1$T7input_signal > 1 & YBX1$T7Ybx1_rep2_signal/YBX1$T7input_signal > 1 & YBX1$T7Ybx1_rep1_signal/YBX1$T7halo_signal > 1 & YBX1$T7Ybx1_rep2_signal/YBX1$T7halo_signal > 1, "peak_ID"]
+
+AB <- list(RAP_enrichments, T7RAP_enrichments)
+names(AB) <- c("with modif", "without modif")
+FigS7A <- euler(AB, shape="circle") 
+
+plot(FigS7A, fills=c("#93ADD0","#8CBDA0"), quantities=TRUE, edges=F)
+```
+
+Figure S7B
+```{r, message=FALSE, warning=FALSE,tidy=TRUE}
+FCs <- YBX1[,c("BS_rep1","BS_rep2","BS_T7rep1","BS_T7rep2")]
+FCs <- reshape2::melt(FCs, value.name = "Binding_Score", variable.name = "Assay")
+RAP <- rep("RAP", nrow(FCs)/2)
+T7RAP <- rep("T7RAP", nrow(FCs)/2)
+FCs$Assay_Type <- c(RAP,T7RAP)
+
+
+plot <- ggplot( data=FCs, aes(x=Assay, y=log2(Binding_Score+1)) ) +
+  geom_jitter(aes(color=Assay_Type), pch=16, alpha=0.25) +
+  scale_color_manual(values = c("#93ADD0","#8ABEA0")) +
+  theme_classic(base_size = 12.5)
+
+FigS7B <- plot + geom_violin(trim = T, bw=0.75, scale="width", lwd=1, fill=NA) +
+  geom_boxplot(outlier.shape = NA, width=0.15, lwd=1, fill=NA) 
+
+FigS7B
+
+list <- list(
+  BS_T71 = YBX1$BS_T7rep1,
+  BS_T72  = YBX1$BS_T7rep2
+)
+
+# run wilcox.test() for each, comparing to the overlap vector
+wt <- lapply(names(list), function(nm) {
+  y   <- list[[nm]]
+  test <- wilcox.test(YBX1$BS_rep1, y)
+  data.frame(
+    comparison = paste0("BS1_vs_", nm),
+    W          = as.numeric(test$statistic),
+    p.value    = test$p.value
+  )
+})
+
+# combine into one df
+wt_df <- do.call(rbind, wt)
+
+
+
+```
+
+Figure S7C
+```{r, message=FALSE, warning=FALSE,tidy=TRUE}
+# Looking for the top 10 motifs k=5
+k=5
+pos_fa <- str_sub(YBX1$pos_fa,75,125)
+kmer_table <- as.data.frame("YBX1")
+STRINGS <- c((paste(pos_fa,collapse = 'NN')))
+kmer_table <- cbind(kmer_table,STRINGS)
+kmer_table[] <- lapply(kmer_table, as.character)
+bases <- c("A","C","T","G")
+kmers <- unite(as.data.frame(permutations(n=4,r=k,v=bases,repeats.allowed = T)),col = kmers,sep = "")
+
+kmers<-cbind(kmers,str_count(kmer_table[1,2],kmers[,1])/length(kmer_table[1,2]))
+
+rownames(kmers) <- kmers$kmers
+pos_kmers_5 <- as.data.frame(kmers[,-1], row.names = rownames(kmers))
+colnames(pos_kmers_5) <- "YBX1"
+
+
+
+neg_fa <- str_sub(YBX1$neg_fa,75,125)
+kmer_table <- as.data.frame("YBX1")
+STRINGS <- c(as.character(paste(neg_fa,collapse = 'NN')))
+kmer_table <- cbind(kmer_table,STRINGS)
+kmer_table[] <- lapply(kmer_table, as.character)
+bases <- c("A","C","T","G")
+kmers <- unite(as.data.frame(permutations(n=4,r=k,v=bases,repeats.allowed = T)),col = kmers,sep = "")
+
+kmers<-cbind(kmers,str_count(kmer_table[1,2],kmers[,1])/length(kmer_table[1,2]))
+
+rownames(kmers) <- kmers$kmers
+neg_kmers_5 <- as.data.frame(kmers[,-1], row.names = rownames(kmers))
+colnames(neg_kmers_5) <- "YBX1neg"
+
+
+pos_kmers_5$KMERS <- rownames(pos_kmers_5)
+neg_kmers_5$KMERS <- rownames(neg_kmers_5)
+K5s_Ybx1 <- merge(pos_kmers_5, neg_kmers_5, by="KMERS")
+
+K5s_Ybx1 <- K5s_Ybx1[K5s_Ybx1$YBX1 >= 1,]
+K5s_Ybx1 <- K5s_Ybx1[K5s_Ybx1$YBX1neg >= 1,]
+K5s_Ybx1$Fold_Change <- K5s_Ybx1$YBX1 / K5s_Ybx1$YBX1neg
+#top10 
+K5s_Ybx1 <- K5s_Ybx1  %>% top_n(10, Fold_Change) 
+K5s_Ybx1 <- K5s_Ybx1[order(K5s_Ybx1$Fold_Change),] 
+K5s_Ybx1$KMERS <-  gsub("T", "U", K5s_Ybx1$KMERS)
+
+barplot(K5s_Ybx1$Fold_Change, names.arg = K5s_Ybx1$KMERS, horiz = T, las=1, xlab="Counts: Bound sites / Control sites", col="#93ADD0", xlim=c(0,10), space=0.1)
+abline(v=c(0,1,2,3,4,5,6,7,8,9,10), lty=2, lwd=1)
+```
+
+Figure S7D
+```{r, message=FALSE, warning=FALSE,tidy=TRUE}
+YBX1_sub <- YBX1[grep("CGACG|CGAAT|GCGAA|CGATG|ACGAC|ACCGA|CCGAT|CGAAG|CGACC|ACGAA",str_sub(YBX1$pos_fa)),]
+
+
+AB <- list(log2( YBX1_sub$MeanFC+1  ),log2( YBX1_sub$MeanFC_T7+1  ))
+AB <- list(YBX1_sub$MeanFC,YBX1_sub$MeanFC_T7)
+
+names(AB) <- c("YES m6A","NO m6A")
+
+
+
+par(bty="n")
+boxplot2(AB, outline=F, range=1, boxwex=0.35, notch=T, las=2, ylab="Mean Fold Change", ylim=c(0,6), lty=1, main="m6A dependency in top10 binding motif peaks", col=c("#93ADD0","#8CBDA0"))
+abline(h=c(1,2))
+
+wt <- wilcox.test(AB$`YES m6A`, AB$`NO m6A`, alternative = "greater")
+wt <- wt$p.value
+```
+Figure S7E
+```{r, message=FALSE, warning=FALSE,tidy=TRUE}
+# Loading the YBX1_19 metafile and the annotated m5C generated in the markdown "YBX1_liftover"
+
+m5C_annotated <- read.table("/Users/riccardomosca/Desktop/RAPseq_PAPER/FIGUREs/FIGURE5/m5C_annotated.txt", sep = "\t", header = T)
+YBX1_19 <- read.table("/Users/riccardomosca/Desktop/RAPseq_PAPER/FIGUREs/FIGURE5/Ybx1_metafile_19.txt", sep = "\t", header = T)
+
+# Considering only the genes dependent on the modifications
+YBX1_19 <- YBX1_19 %>%
+  filter( ! peak_ID %in% T7RAP_enrichments )
+
+gene_IDs <-YBX1_19  %>% 
+  mutate(gene_ID = strsplit(gene_ID, "\\.") %>% 
+           lapply(., function(x) x[1]) %>% 
+           unlist())
+gene_IDs_Ybx1 <- gene_IDs %>%
+  distinct(gene_ID, .keep_all = FALSE)
+
+gene_IDs_m5C <- m5C_annotated %>% 
+  mutate(gene_ID = strsplit(gene_ID, "\\.") %>% 
+           lapply(., function(x) x[1]) %>% 
+           unlist())
+gene_IDs_m5C <- gene_IDs_m5C %>%
+  distinct(gene_ID, .keep_all = FALSE)
+
+YBX1_RAP <- gene_IDs_Ybx1$gene_ID
+m5C <- gene_IDs_m5C$gene_ID
+
+AB <- list(YBX1_RAP, m5C)
+names(AB) <- c("YBX1_RAP", "m5C")
+v <- euler(AB, shape="circle") 
+
+
+plot(v, fills=c("#93ADD0","#9ECAE1"), quantities=TRUE, edges=F)
+```
+
