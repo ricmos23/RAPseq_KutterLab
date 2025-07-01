@@ -1,0 +1,263 @@
+---
+title: "Peak annotation and filtering"
+author: "Riccardo Mosca"
+date: "2025-05-12"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+
+This markdown filters and annotates the RAPseq peak bed file obtained from Snakemake pipeline, according to Halo and Input signal, computes the peak binding score (BS) and annotation. The output peak file is saved as .txt. 
+
+
+Loading packages and annotation file
+```{r,message=FALSE, warning=FALSE,tidy=TRUE}
+library(dplyr)
+library(stringr)
+library(GenomicRanges)
+library(GenomicFeatures)
+library(idr)
+
+#
+txdb <- makeTxDbFromGFF(file = "/Users/riccardomosca/Desktop/RAPseq_PAPER/ANNOTATIONs/gencode.v37.annotation.gtf", format = "gtf")
+Gencode_v37_IDs <- read.table(file = "/Users/riccardomosca/Desktop/RAPseq_PAPER/ANNOTATIONs/gencode.v37.IDs.txt")
+colnames(Gencode_v37_IDs) <- c("gene_ID","transcript_ID","gene_strand","gene_name","gene_type")
+Gencode_v37_IDs <- Gencode_v37_IDs[!duplicated(Gencode_v37_IDs), ]
+Gencode_v37_IDs <- Gencode_v37_IDs[!is.na(Gencode_v37_IDs$transcript_ID), ]
+head(Gencode_v37_IDs)
+
+```
+Building unified annotation of transcript features 
+```{r,tidy=TRUE}
+# 1. Extract transcript-level features from the TxDb object 
+Intron_GR <- intronsByTranscript(txdb, use.names = TRUE) 
+Exon_GR <- exonsBy(txdb, by = "tx", use.names = TRUE)
+ThreeUTR_GR <- threeUTRsByTranscript(txdb, use.names = TRUE)
+FiveUTR_GR <- fiveUTRsByTranscript(txdb, use.names = TRUE)
+CDS_GR <- cdsBy(txdb, by = "tx", use.names = TRUE)
+pass_1 <- subsetByOverlaps(Exon_GR,CDS_GR,invert = T)
+pass_2 <- subsetByOverlaps(pass_1,ThreeUTR_GR,invert = T)
+Exon_GR <- subsetByOverlaps(pass_2,FiveUTR_GR,invert = T)
+rm(pass_1)
+rm(pass_2)
+
+# 2. Filter exonic ranges to remove CDS, 3′UTR, and 5′UTR regions
+pass_1 <- subsetByOverlaps(Exon_GR,    CDS_GR,      invert = TRUE)  
+pass_2 <- subsetByOverlaps(pass_1,     ThreeUTR_GR, invert = TRUE)  
+Exon_GR <- subsetByOverlaps(pass_2,     FiveUTR_GR,  invert = TRUE)  
+rm(pass_1, pass_2)  
+
+# 3. Convert each GRangesList to a data.frame and tag with feature type
+make_df <- function(gr, name) {
+  df <- as.data.frame(gr)[, c(3,4,5,2,7)]      # select (seqnames,start,end,group,strand)
+  df$feature <- name                           # annotate feature type
+  names(df) <- c("chr","start","end","transcript_ID","feature_strand","feature")
+  df
+}
+Introns   <- make_df(Intron_GR,   "intron")
+Exons     <- make_df(Exon_GR,     "exon")
+CDSs      <- make_df(CDS_GR,      "CDS")
+FiveUTRs  <- make_df(FiveUTR_GR,  "5UTR")
+ThreeUTRs <- make_df(ThreeUTR_GR, "3UTR")
+
+# 4. Combine all feature RBP, remove intermediate objects
+Features <- rbind(Introns, Exons, CDSs, FiveUTRs, ThreeUTRs)
+
+# 5. Merge with Gencode transcript→gene mapping, reorder and rename columns
+Features <- merge(Features, Gencode_v37_IDs, by = "transcript_ID")
+Features$gene_ID <- as.character(Features$gene_ID)
+Features <- Features[, c(2,3,4,7,6,5,9,10)]
+colnames(Features) <- c("chr","start","end","gene_ID","feature","strand","gene_name","gene_type")
+
+# 6. Deduplicate and finalize metadata columns
+Features$IDs <- with(Features, paste(chr, start, end, gene_ID, feature, strand, gene_name, sep = "_"))
+Features <- Features[!duplicated(Features$IDs), 1:8]
+Features$chr    <- as.character(Features$chr)
+Features$strand <- as.character(Features$strand)
+
+# 7. Re-create GRanges object for the final feature set
+Features_GR <- makeGRangesFromDataFrame(Features[, 1:6])
+
+# 8. Tidy up column names and types
+colnames(Features) <- c("chr","start","end","gene_ID","feature","gene_strand","gene_name","gene_type")
+Features$gene_type <- as.character(Features$gene_type)
+
+
+
+
+```
+
+Filtering and annotation steps 
+```{r}
+# Get the list of peak files in the directory
+peak_files <- list.files("/Users/riccardomosca/Desktop/RAPseq_PAPER/PEAKs/T7_Fig5/", full.names = TRUE)
+
+# Create an empty list to store results for each RBP
+results_list <- list() 
+
+# Loop through each peak file
+for (file in peak_files) { 
+  # Extract RBP name from file path
+  protein_name <- tools::file_path_sans_ext(basename(file))
+  
+  # Read bed file 
+  RBP <- read.table(file, sep = '\t', header = TRUE)
+
+
+  colnames(RBP) <- c("chr","Summit_start","Summit_end", "start", "end", "strand","Count_rep1","Count_rep2","minuslog10pval_rep1","minuslog10pval_rep2","Rep1","Rep2","Halo","Input","positive_fa","negative_fa")
+
+
+
+
+####### the few variables created bellow are required by the idr package to compute the irreproducibility discovery rate #######
+mu <- 2.6
+sigma <- 1.3
+rho <- 0.8
+p <- 0.7
+
+
+
+
+############. If the user wants, the few lines bellow can be used to compute IDRs (both local and global) before any filtering is done #######
+x<-RBP[,c("minuslog10pval_rep1","minuslog10pval_rep2")]
+idr.out <- est.IDR(x, mu, sigma, rho, p, eps=0.001, max.ite=30)
+RBP$local_idr <- idr.out$idr
+RBP$global_IDR <- idr.out$IDR
+
+RBP$RBP <- tools::file_path_sans_ext(basename(file))
+RBP$Peak_ID <- paste( RBP$chr,RBP$start,RBP$end,RBP$strand, sep = "_" )
+RBP$Summit_start <-RBP$Summit_start 
+RBP$Summit_end <-RBP$Summit_end 
+RBP$IDs <- paste( RBP$chr,RBP$Summit_start,RBP$Summit_end,RBP$strand, sep = "_" )
+RBP$Halo[RBP$Halo == 0] <- min(RBP[RBP$Halo!=0,"Halo"])
+RBP$Input[RBP$Input == 0] <- min(RBP[RBP$Input!=0,"Input"]) 
+RBP$minuslog10FDR_rep1 <- round(-log10(p.adjust(10^-RBP$minuslog10pval_rep1, method = "BH")),5)
+RBP$minuslog10FDR_rep2 <- round(-log10(p.adjust(10^-RBP$minuslog10pval_rep2, method = "BH")),5)
+
+##### Filtering: FDR <= 0.05; Fold Change: above Halo > 1 and above Input > 1; Fold Change Halo over Input < 2  #############
+RBP <- RBP[RBP$minuslog10FDR_rep1 >= 1.30103,] #14097
+RBP <- RBP[RBP$minuslog10FDR_rep2 >= 1.30103,] #13950
+
+RBP <- RBP[RBP$minuslog10pval_rep1 >= 4,] #11976
+RBP <- RBP[RBP$minuslog10pval_rep2 >= 4,] #11072
+
+RBP <-RBP[RBP$Halo/RBP$Input < 2,] #9053
+
+
+RBP$FCH_rep1 <-RBP$Rep1/RBP$Halo
+RBP$FCH_rep2 <-RBP$Rep2/RBP$Halo
+RBP$FCI_rep1 <-RBP$Rep1/RBP$Input
+RBP$FCI_rep2 <-RBP$Rep2/RBP$Input
+RBP$FCmean_rep1 <- (RBP$FCH_rep1 +RBP$FCI_rep1)/2
+RBP$FCmean_rep2 <- (RBP$FCH_rep2 +RBP$FCI_rep2)/2
+RBP$BS_rep1 <- log2(RBP$Rep1) *RBP$FCmean_rep1
+RBP$BS_rep2 <- log2(RBP$Rep2) *RBP$FCmean_rep2
+RBP$BS <- (RBP$BS_rep1 +RBP$BS_rep2)/2
+RBP$Mean_FCH <- (RBP$FCH_rep1 +RBP$FCH_rep2)/2
+RBP$Mean_FCI <- (RBP$FCI_rep1 +RBP$FCI_rep2)/2
+
+RBP <-RBP[RBP$FCH_rep1 > 1 &RBP$FCH_rep2 > 1,] #9051
+RBP <-RBP[RBP$FCI_rep1 > 1 &RBP$FCI_rep2 > 1,] #9046
+
+
+
+##### Filtering for sequencing complexity to account for spurious and artifactual alignments, GA dinucleotide used for complexity determination ##### 
+RBP$positive_fa_check <- str_sub(RBP$positive_fa,85,115)
+Gs <- str_count(RBP$positive_fa_check,"G") / (115-85) 
+As <- str_count(RBP$positive_fa_check,"A") / (115-85) 
+Ts <- str_count(RBP$positive_fa_check,"T") / (115-85) 
+Cs <- 1 - Gs - As - Ts
+GAs <- Gs + As
+RBP$GAs <- GAs
+RBP$GTs <- Gs + Ts
+RBP$GCs <- Gs + Cs
+RBP$GATs <- Gs + As + Ts
+GAs <- Gs + As
+GTs <- Gs + Ts
+GATs <- Gs + As + Ts
+RBP <- RBP[RBP$GAs <= 0.7,] 
+RBP <- RBP[RBP$GATs <= 0.9,]
+
+
+    ####### Peak Annotation ########
+   GR <- makeGRangesFromDataFrame(RBP[,c("chr","Summit_start","Summit_end","Peak_ID","RBP","strand")])
+    
+   RBP <-RBP[as.data.frame(findOverlaps(GR,Features_GR, type = "within"))[,1],] 
+   Annots <- Features[as.data.frame(findOverlaps(GR,Features_GR, type = "within"))[,2],][,4:8]
+   RBP <- cbind(RBP,Annots)
+   RBP$strand <- as.character(RBP$strand)
+   RBP$gene_strand <- as.character(RBP$gene_strand)
+   RBP <-RBP[RBP$strand ==RBP$gene_strand, ]
+   RBP$IDs <- paste(RBP$IDs,RBP$feature,RBP$gene_ID, sep = "_" )
+   RBP <-RBP[duplicated(RBP$IDs) == "FALSE",] 
+   RBP$IDs <- paste(RBP$chr,RBP$Summit_start,RBP$Summit_end,RBP$strand,RBP$feature, sep = "_" )
+   RBP <-RBP[duplicated(RBP$IDs) == "FALSE",]
+    
+   RBP$IDs <- paste(RBP$chr,RBP$Summit_start,RBP$Summit_end,RBP$strand, sep = "_" )
+   RBP$Unique_Anno <-  ave( seq_along(RBP$IDs),RBP$IDs, FUN = length ) == 1
+   RBP <-RBP[(RBP$Unique_Anno == "FALSE" &RBP$feature == "intron") == "FALSE" ,] 
+    #print(paste(i,nrow(RBP)))
+    
+   RBP$Unique_Anno <-  ave( seq_along(RBP$IDs),RBP$IDs, FUN = length ) == 1
+   RBP <-RBP[(RBP$Unique_Anno == "FALSE" &RBP$feature == "exon") == "FALSE" ,]
+    #print(paste(i,nrow(RBP)))
+    
+   RBP$Unique_Anno <-  ave( seq_along(RBP$IDs),RBP$IDs, FUN = length ) == 1
+   RBP <-RBP[(RBP$Unique_Anno == "FALSE" &RBP$feature == "5UTR") == "FALSE" ,] 
+   # print(paste(i,nrow(RBP)))
+    
+   RBP$Unique_Anno <-  ave( seq_along(RBP$IDs),RBP$IDs, FUN = length ) == 1
+   RBP <-RBP[(RBP$Unique_Anno == "FALSE" &RBP$feature == "3UTR") == "FALSE" ,]
+   # print(paste(i,nrow(RBP)))
+    
+   RBP$peak_uniqueness <- ave( seq_along(RBP$Peak_ID),RBP$Peak_ID, FUN = length ) == 1
+    #print(paste(i,nrow(RBP)))
+    
+    AAA <-RBP[,c("gene_ID","BS")]
+    BBB <- AAA %>% group_by(gene_ID) %>% summarise(Gene_BI = sum(BS))
+    BBB <- as.data.frame(BBB)
+    
+   RBP <-RBP[grep("pseudogene",RBP$gene_type,invert = T),]
+   RBP <-RBP[grep("tRNA|rRNA",RBP$gene_type,invert = T),]
+   #print(paste(i,nrow(RBP)))
+    
+   RBP <- merge(RBP,BBB,by = "gene_ID")
+    
+  
+  
+
+
+
+
+
+
+  
+  round(cor(RBP$FCH_rep1,RBP$FCH_rep2,method = "spearman"),2)
+  
+
+
+
+
+Columns <- c("chr", "start", "end", "Peak_ID", "RBP", "strand", "Summit_start", "Summit_end","Rep1","Rep2","Halo","Input","minuslog10pval_rep1", "minuslog10pval_rep2", "minuslog10FDR_rep1", "minuslog10FDR_rep2", "FCH_rep1", "FCH_rep2", "FCI_rep1", "FCI_rep2", "Mean_FCH", "Mean_FCI", "BS", "gene_ID", "gene_name", "gene_type", "feature", "Gene_BI", "local_idr", "global_IDR", "positive_fa", "negative_fa" )
+
+Columns_rename <- c("chr", "start", "end", "Peak_ID", "RBP", "strand", "Summit_start", "Summit_end","Rep1","Rep2","Halo","Input","minuslog10pval_rep1", "minuslog10pval_rep2", "minuslog10FDR_rep1", "minuslog10FDR_rep2", "FCH_rep1", "FCH_rep2", "FCI_rep1", "FCI_rep2", "Mean_FCH", "Mean_FCI", "BS", "gene_ID", "gene_name", "gene_type", "feature", "Gene_BS", "local_idr", "global_IDR", "positive_fa", "negative_fa" )
+
+  
+
+  RBP <-RBP[,Columns]
+  colnames(RBP) <- Columns_rename
+  
+  
+
+  results_list[[protein_name]] <- RBP
+  write.table(RBP, file = paste0("/Users/riccardomosca/Desktop/RAPseq_PAPER/PEAKs/ANNOTATED/T7_Fig5/NEW/", protein_name, ".txt"), row.names = FALSE, col.names = TRUE, sep = "\t")
+}
+
+head(RBP)
+
+```
+```{r}
+sessionInfo()
+```
+
