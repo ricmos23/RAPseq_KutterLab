@@ -1,1 +1,2 @@
-
+To compare HUR orthologs, IGF2BPs variants and mod-RAPseq binding site metafiles were built by overlapping the peak coordinates of orthologs or variants, respectively, using bedtools merge (v2.21.0). 
+For each RBP, the signal within the overlapping regions were retrieved from each replicate of the respective ortholog or variant.
