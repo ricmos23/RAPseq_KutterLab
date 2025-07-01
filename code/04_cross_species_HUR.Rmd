@@ -1,0 +1,494 @@
+---
+title: "Figure4"
+author: "Riccardo Mosca"
+date: "2025-05-12"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+This markdown show how to generate Figure 4 and Figure S4
+
+Loading packages and the metafile for the six HUR orthologs with the pyhlop100 for each binding site generated in this script: "HUR_metafile_annotation"
+```{r,message=FALSE, warning=FALSE,tidy=TRUE}
+library(ggplot2)
+library(ggpubr)
+library(gplots)
+library(stringr)
+library(org.Dr.eg.db)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(eulerr)
+
+HURs_metafile_annotated <- read.table("/Users/riccardomosca/Desktop/RAPseq_PAPER/FIGUREs/FIGURE3/HURs_metafile_Human_annotated_with_phylop100.txt", sep = '\t', header = T)
+
+
+```
+#Figure 4D
+```{r}
+
+
+plot( density(unlist(str_locate_all(HURs_metafile_annotated[grep("hs",HURs_metafile_annotated$RBPs),"pos_fa"],"TTT"))-100,bw=2) , lwd=5, col="#1F78B2", bty="n", main=NA, xlab=NA, ylim=c(0.004,0.009), las=1)
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("mm",HURs_metafile_annotated$RBPs),"pos_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#7A52A5")
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("md",HURs_metafile_annotated$RBPs),"pos_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col= "#FA9999")
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("gg",HURs_metafile_annotated$RBPs),"pos_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#9ECAE1")
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("xt",HURs_metafile_annotated$RBPs),"pos_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col= "#E2C88A")
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("dr",HURs_metafile_annotated$RBPs),"pos_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#187D41")
+
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("hs",HURs_metafile_annotated$RBPs),"neg_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col= "#141414" )
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("mm",HURs_metafile_annotated$RBPs),"neg_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#323232" )
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("md",HURs_metafile_annotated$RBPs),"neg_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#505050" )
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("gg",HURs_metafile_annotated$RBPs),"neg_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#6E6E6E" )
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("xt",HURs_metafile_annotated$RBPs),"neg_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#8C8C8C" )
+points( density(unlist(str_locate_all(HURs_metafile_annotated[grep("dr",HURs_metafile_annotated$RBPs),"neg_fa"],"TTT"))-100,bw=2), type="l", lwd=5, col="#B3B3B3" )
+
+
+```
+#Figure 4E
+Plotting a loess smooth curve and boxplots of the ortholog FC normalized to Input across transcripts containing 1–6 consecutive ‘UUU’ motifs.
+```{r}
+HURs_metafile_annotated$UUUs <- str_count(str_sub(HURs_metafile_annotated$pos_fa,50,150),"TTT")
+HURs_metafile_annotated$UUUs[HURs_metafile_annotated$UUUs > 6] <- 6
+RAP <- HURs_metafile_annotated
+smooth <- ggplot2::ggplot(data=RAP, aes(x=UUUs, y=Ortholog_average_FCI)) + 
+  stat_smooth(method="loess", color="#135094", fill="#9ECAE1", span=0.8, level=0.99) + 
+  theme_classic2(base_size = 5) + 
+  ylab("Fold Change") + 
+  xlab("No of Uracil triplets") +   
+  scale_x_continuous(breaks = c(0,1,2,3,4,5,6)) +
+  coord_cartesian(ylim=c(3.4,7))   
+boxplot <- ggplot2::ggplot(data=RAP, aes(x=as.character(UUUs), y=Ortholog_average_FCI)) +
+  geom_boxplot(outlier.shape = NA, fill=NA, color="#135094", size=1) +
+  theme_classic2(base_size = 5) + 
+  ylab("Fold Change") + 
+  xlab("No of Uracil triplets") +
+  coord_cartesian(ylim=c(0, 20))
+Fig4E <- ggarrange(smooth,boxplot,NULL,ncol=3)
+Fig4E
+```
+
+Figure 4F
+```{r}
+orths <- c("dr","xt","gg", "md", "mm", "hs")
+FCIs <- list()
+for (i in 1:6){
+  FCI <- paste("Mean_FCI_",orths[i],sep="")
+  FCH <- paste("Mean_FCH_",orths[i],sep="")
+  FCIs[[i]] <- log2(HURs_metafile_annotated[HURs_metafile_annotated[,FCH]>=2,FCI]+1)
+  
+}
+names(FCIs) <- orths
+
+par(bty="n")
+Fig4F <- boxplot2(FCIs,outline = FALSE, las=2, lty=1, range=1,  col=NA, ylab="log2(FC+1)", ylim=c(0,5), boxwex=0.9)
+
+
+list <- list(
+  dr = HURs_metafile_annotated$Mean_FCI_dr,
+  xt  = HURs_metafile_annotated$Mean_FCI_xt
+)
+
+# run wilcox.test() for each, comparing to the overlap vector
+wt <- lapply(names(list), function(nm) {
+  y   <- list[[nm]]
+  test <- wilcox.test(HURs_metafile_annotated$Mean_FCI_gg, y)
+  data.frame(
+    comparison = paste0("gg_vs_", nm),
+    W          = as.numeric(test$statistic),
+    p.value    = test$p.value
+  )
+})
+
+# combine into one df
+wt_df <- do.call(rbind, wt)
+
+print(wt_df)
+
+
+```
+
+
+Figure 4G 
+From this figure, the binding sites without UUUs are removed 
+```{r, ,message=FALSE, warning=FALSE,tidy=TRUE}
+#filtering step 
+HURs_metafile_filtered <- HURs_metafile_annotated %>%
+  filter(str_count(str_sub(pos_fa, 85, 115), "TTT") > 0)
+HURs_metafile_filtered$NumOrthologs <- as.character(HURs_metafile_filtered$NumOrthologs)
+HURs_metafile_filtered$NumOrthologs <- factor(HURs_metafile_filtered$NumOrthologs, levels = c("1","2","3","4","5","6"))
+
+#sunsampling to the minimum sample size
+balanced_HURs <- HURs_metafile_filtered[1:6, ]
+set.seed(10)
+
+
+for (i in 1:6){
+# pull out all rows with exactly k orthologs
+  subset_i <- HURs_metafile_filtered[HURs_metafile_filtered$NumOrthologs == i,]
+  
+# (optional) remove upper outliers in Ortholog_average_BS
+  stats_i <- summary(subset_i$Ortholog_average_BS)
+  thr_upper <- stats_i[6] + (1.5*(stats_i[6] - stats_i[2]))
+  subset_i <- subset_i[subset_i$Ortholog_average_BS <= thr_upper,]
+
+# down‐sample to the smallest group size
+  sampled_i <- subset_i[sample( 1:nrow(subset_i),min(table(HURs_metafile_filtered$NumOrthologs)) ),]
+
+# append into our growing data.frame  
+  balanced_HURs <- rbind(balanced_HURs,sampled_i)
+}
+
+balanced_HURs <- balanced_HURs[-c(1:6),]
+
+
+coordinates <- function(x) {
+  data.frame(y = median(x, na.rm=T),
+             ymin = quantile(x, na.rm=T)[[2]], 
+             ymax = quantile(x, na.rm=T)[[4]]) 
+}
+
+
+Fig4G <- ggplot(data=balanced_HURs, aes(x=NumOrthologs, y=log2(balanced_HURs$Ortholog_average_BS))) +
+  geom_violin( bw=0.75) +  # Change the fill color to 'blue'
+  stat_summary(fun.data = coordinates, geom = "pointrange", size = 1.5, na.rm=T) +
+  theme_pubr() +
+  ylim(2, 10) +
+  guides(fill=FALSE)  # This removes the legend for fill
+
+Fig4G
+
+
+```
+
+Figure 4H
+```{r}
+cols <- c("phylop100", "phylop100_neg")
+
+for (col in cols) {
+  # replace “.” with NA, then coerce to numeric
+  HURs_metafile_filtered[[col]] <- as.numeric(
+    replace(
+      HURs_metafile_filtered[[col]],
+      HURs_metafile_filtered[[col]] == ".",
+      NA
+    )
+  )
+}
+ 
+
+HURs_metafile_filtered$phylop100 <- as.numeric(HURs_metafile_filtered$phylop100)
+HURs_metafile_filtered$phylop100_neg <- as.numeric(HURs_metafile_filtered$phylop100_neg)
+
+balanced_HURs <- HURs_metafile_filtered[1:2,]
+set.seed(2)
+for (i in 1:6){
+  subset_i <- HURs_metafile_filtered[HURs_metafile_filtered$NumOrtholog == i,] 
+  sampled_i <- subset_i[sample( rownames(subset_i),min(table(HURs_metafile_filtered$NumOrtholog)) ),]
+  balanced_HURs <- rbind(balanced_HURs,sampled_i)
+}
+balanced_HURs <- balanced_HURs[-c(1:2),]
+
+
+coordinates <- function(x) {
+  data.frame(y = median(x, na.rm=T),
+             ymin = quantile(x, na.rm=T)[[2]], 
+             ymax = quantile(x, na.rm=T)[[4]]) 
+}
+
+Fig4H <- ggplot(data = balanced_HURs, aes(x=as.character(NumOrthologs) ,y=phylop100, color=as.character(NumOrthologs))) +
+  stat_summary(fun.data = coordinates, geom = "pointrange", size = 1.5, na.rm=T, position = position_nudge(x=-0.1, y=0))  +
+  theme_classic() +
+  scale_color_manual(values = c("#135094","#135094","#135094","#135094","#135094", "#135094")) +
+  ylab("Mean phyloP 100 vertebrates scores") + 
+  guides(color=FALSE)
+
+Fig4H + stat_summary(data=balanced_HURs , aes(x=as.character(NumOrthologs),y=phylop100_neg), color="#B3B3B3", fun.data = coordinates, geom = "pointrange", size = 1.5, na.rm=T, position = position_nudge(x=0.1, y=0)) 
+
+
+```
+
+Figure 4I
+```{r}
+UUUs <- str_count(str_sub(HURs_metafile_filtered$pos_fa,85,115),"TTT")
+HURs_metafile_filtered <- HURs_metafile_filtered %>%
+  filter(str_count(str_sub(pos_fa, 85, 115), "TTT") > 0) #from 19078 to 12641
+UUUs <- str_count(str_sub(HURs_metafile_filtered$pos_fa,85,115),"TTT")
+UUUs[UUUs>5] <- 5
+UUUs <- factor(as.character(UUUs),levels = c("5","4","3","2","1"))
+N_orths <- HURs_metafile_filtered$NumOrthologs 
+UUUs_table <- table(data.frame(N_orths,UUUs))
+UUUs_table <- UUUs_table/rowSums(UUUs_table)
+
+Fig4I <- barplot( t(UUUs_table), col=c("#DEEBF7", "#9ECAE1", "#4292C6", "#08519C", "#08306B"), space=0.025, las=1 )
+```
+
+Figure 4J
+```{r}
+#Loading the metafile with hsHUR and drHUR with the dr substrate
+HURs_FISH <- read.table(file = "/Users/riccardomosca/Desktop/RAPseq_PAPER/FIGUREs/FIGURE3/HURsFISH_metafile_annotated.txt", header = T, sep="\t")
+
+names(HURs_FISH)[names(HURs_FISH) == "Mean_FCH_hs"] <- "hs_Mean_FCH"
+names(HURs_FISH)[names(HURs_FISH) == "Mean_FCI_hs"] <- "hs_Mean_FCI"
+
+names(HURs_FISH)[names(HURs_FISH) == "Mean_FCH_dr"] <- "dr_Mean_FCH"
+names(HURs_FISH)[names(HURs_FISH) == "Mean_FCI_dr"] <- "dr_Mean_FCI"
+
+
+orths <- c("hs","dr")
+FCIs <- list()
+for (i in 1:2){
+  FCI <- paste(orths[i],"_Mean_FCI",sep="")
+  FCH <- paste(orths[i],"_Mean_FCH",sep="")
+  FCIs[[i]] <- log2(HURs_FISH[HURs_FISH[,FCH]>=2,FCI]+1)
+  
+}
+names(FCIs) <- orths
+
+
+#pdf(file = "/Users/ionutatanasoai/Documents/RAPseq_Manuscript/FIGURE_3/HURs_FISH_boxplots_FCs_changes_in_affinity.pdf",3,7.5)
+par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
+boxplot2(FCIs,outline=F, las=2, lty=1, range=1,  col=NA, ylab="log2(FC+1)", ylim=c(0,7), boxwex=0.9)
+#dev.off()
+
+wt <- wilcox.test(HURs_FISH$dr_Mean_FCI, HURs_FISH$hs_Mean_FCI)
+wt <- wt$p.value
+```
+
+Figure 4K
+```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+Human <- HURs_metafile_annotated
+FISH <- HURs_FISH
+Human$feature <- factor(Human$feature, levels=c("3UTR","5UTR","CDS","exon","intron"))
+
+FISH$feature <- factor(FISH$feature, levels=c("3UTR","5UTR","CDS","exon","intron"))
+
+#computing the percentage for each features to plot it
+counts_hs_hs <- table(Human[Human$Mean_FCH_hs >= 2, "feature"])
+pct_hs_hs <- round(counts_hs_hs / sum(counts_hs_hs) * 100, 1)  
+labels_hs_hs <- paste0(names(counts_hs_hs), "\n", pct_hs_hs, "%")
+
+counts_dr_hs <- table(Human[Human$Mean_FCH_dr >= 2, "feature"])
+pct_dr_hs <- round(counts_dr_hs / sum(counts_dr_hs) * 100, 1)  
+labels_dr_hs <- paste0(names(counts_dr_hs), "\n", pct_dr_hs, "%")
+
+counts_dr_dr <- table(FISH[FISH$dr_Mean_FCH >= 2, "feature"])
+pct_dr_dr <- round(counts_dr_dr / sum(counts_dr_dr) * 100, 1)  
+labels_dr_dr <- paste0(names(counts_dr_dr), "\n", pct_dr_dr, "%")
+
+counts_hs_dr <- table(FISH[FISH$hs_Mean_FCH >= 2, "feature"])
+pct_hs_dr <- round(counts_hs_dr / sum(counts_hs_dr) * 100, 1)  
+labels_hs_dr <- paste0(names(counts_hs_dr), "\n", pct_hs_dr, "%")
+
+
+par(no.readonly = FALSE)
+
+
+
+
+
+```
+
+```{r}
+par(mfrow=c(2,2), mar=c(2,2,2,2))
+pie(counts_hs_hs,labels = labels_hs_hs, main   = "hs in HUMAN", col= c("#DEEBF7", "#9ECAE1", "#1F78B2", "#08519C", "#08306B"))
+pie(counts_dr_hs,labels = labels_dr_hs, main   = "dr in HUMAN", col= c("#DEEBF7", "#9ECAE1", "#1F78B2", "#08519C", "#08306B"))
+pie(counts_dr_dr,labels = labels_dr_dr, main   = "dr in FISH", col= c("#DEEBF7", "#9ECAE1", "#1F78B2", "#08519C", "#08306B"))
+pie(counts_hs_dr,labels = labels_hs_dr, main   = "hs in FISH", col= c("#DEEBF7", "#9ECAE1", "#1F78B2", "#08519C", "#08306B"))
+
+```
+
+Figure S4C
+```{r}
+par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
+
+
+
+plot( density(unlist(str_locate_all(HURs_FISH[grep("hsHURFISH",HURs_FISH$RBP),"pos_fa"],"TTT"))-100,bw=3) , lwd=5, col="#1F78B3", bty="n", main=NA, xlab=NA, ylim=c(0.003,0.01), las=1)
+points( density(unlist(str_locate_all(HURs_FISH[grep("drHURFISH",HURs_FISH$RBP),"pos_fa"],"TTT"))-100,bw=3), type="l", lwd=5, col="#197C41")
+
+points( density(unlist(str_locate_all(HURs_FISH[grep("hsHURFISH",HURs_FISH$RBP),"neg_fa"],"TTT"))-100,bw=3), type="l", lwd=5, col="#141414" )
+points( density(unlist(str_locate_all(HURs_FISH[grep("drHURFISH",HURs_FISH$RBP),"neg_fa"],"TTT"))-100,bw=3), type="l", lwd=5, col="#B3B3B3" )
+
+
+```
+
+Figure S4D
+```{r}
+HURs_FISH$UUUs <- str_count(str_sub(HURs_FISH$pos_fa,50,150),"TTT")
+HURs_FISH$UUUs[HURs_FISH$UUUs > 7] <- 7
+RAP <- HURs_FISH
+
+
+par(bty="n", mfrow=c(1,2))
+boxplot(data=RAP[RAP$BS_hs>=2,], BS_hs~UUUs, outline=F, range=1, col="#08519C", ylab="hs BS", boxwex=0.9, lty=1)
+boxplot(data=RAP[RAP$BS_dr>=2,], BS_dr~UUUs, outline=F, range=1, col="#197C41", ylab="dr BS", boxwex=0.9, lty=1)
+
+ 
+
+
+```
+
+Figure S4E
+```{r}
+Genes <- unique(HURs_FISH[HURs_FISH$dr_Mean_FCH >= 2 ,"gene_name"])
+entrez_IDs <- na.omit(as.data.frame(unlist(mapIds(org.Dr.eg.db, Genes, 'ENTREZID', 'SYMBOL')))[,1])
+
+
+ALL_GOs_dr <- enrichGO(gene = entrez_IDs,
+                       keyType       = "ENTREZID",
+                       OrgDb         = org.Dr.eg.db,
+                       ont           = "ALL",
+                       pAdjustMethod = "BH",
+                       pvalueCutoff  = 0.01,
+                       qvalueCutoff  = 1,
+                       minGSSize     = 10,
+                       readable      = TRUE)
+ALL_GOs_dr <- as.data.frame(ALL_GOs_dr)
+
+
+Genes <- unique(HURs_metafile_annotated[HURs_metafile_annotated$Mean_FCH_hs >= 2 ,"gene_name"])
+entrez_IDs <- na.omit(as.data.frame(unlist(mapIds(org.Hs.eg.db, Genes, 'ENTREZID', 'SYMBOL')))[,1])
+
+
+ALL_GOs_hs <- enrichGO(gene = entrez_IDs,
+                       keyType       = "ENTREZID",
+                       OrgDb         = org.Hs.eg.db,
+                       ont           = "ALL",
+                       pAdjustMethod = "BH",
+                       pvalueCutoff  = 0.01,
+                       qvalueCutoff  = 1,
+                       minGSSize     = 10,
+                       readable      = TRUE)
+ALL_GOs_hs <- as.data.frame(ALL_GOs_hs)
+
+#Upper one
+ABC <- list(unique(ALL_GOs_hs$Description), unique(ALL_GOs_dr$Description))
+names(ABC) <- c("Human", "Zebrafish")
+
+
+FigS4Eup <- euler(ABC, shape="ellipse")
+plot(FigS4Eup, fills=c("#1F78B3", "#197C41", "#B3B3B3"), quantities=TRUE, edges=F)
+
+#Down one 
+#Filtering only the common GO terms, and plot the Features distribution
+common <- paste(intersect(unique(ALL_GOs_hs$ID), unique(ALL_GOs_dr$ID)),collapse = "|")
+
+gene_name <- unique(unlist(str_split(paste(ALL_GOs_hs[grep(common,ALL_GOs_hs$ID),"geneID"],collapse = "/"),"\\/")))
+df1 <- as.data.frame(gene_name)
+df2 <- HURs_metafile_annotated[HURs_metafile_annotated$Mean_FCH_hs >= 2,]
+df3 <- merge(df2[grep("intron|3UTR",df2$feature), c("gene_name","feature")],df1,by="gene_name")
+hs_ThreeUTR_Intron_features <- table(df3$feature)
+
+pct <- round(prop.table(hs_ThreeUTR_Intron_features) * 100, 1)
+# build labels with newline
+labels_hs <- sprintf("%s\n%.1f%%", names(pct), pct)
+
+
+gene_name <- unique(unlist(str_split(paste(ALL_GOs_dr[grep(common,ALL_GOs_dr$ID),"geneID"],collapse = "/"),"\\/")))
+df1 <- as.data.frame(gene_name)
+df2 <- HURs_FISH[HURs_FISH$dr_Mean_FCH >= 2,]
+df3 <- merge(df2[grep("intron|3UTR",df2$feature),c("gene_name","feature")],df1,by="gene_name")
+dr_ThreeUTR_Intron_features <- table(df3$feature)
+
+pct <- round(prop.table(dr_ThreeUTR_Intron_features) * 100, 1)
+# build labels with newline
+labels_dr <- sprintf("%s\n%.1f%%", names(pct), pct)
+
+
+par(mfrow=c(1,2))
+pie(hs_ThreeUTR_Intron_features, labels_hs, col = c("#DEEBF7", "#08306B"))
+pie(dr_ThreeUTR_Intron_features,labels_dr,  col = c("#DEEBF7", "#08306B"))
+    
+
+```
+
+Figure S4F
+```{r}
+#extracting gene name per each GO term
+Pathways <- ALL_GOs_dr[grep(common,ALL_GOs_dr$ID),c("Description","geneID")]
+colnames(Pathways) <- c("Pathway","geneID")
+df1 <- data.frame()
+for (i in 1:nrow(Pathways)){
+  
+  path <- Pathways[i,1]
+  genes <- str_split(Pathways[i,2],"\\/")
+  path <- rep(path,length(genes))
+  gene_GO_match <- data.frame(path,genes)
+  colnames(gene_GO_match) <- c("Pathway","geneID")
+  df1 <- rbind(df1,gene_GO_match)
+  
+}
+# each row in df1 correspond to one gene, and the description of the related GO term
+colnames(df1) <- c("Description","gene_name")
+
+
+Fish_sub <- HURs_FISH[HURs_FISH$dr_Mean_FCH >= 2,]
+Fish_sub <- Fish_sub[grep("intron|3UTR", Fish_sub$feature),c("gene_name","feature")] 
+dr <- merge(df1,Fish_sub,by="gene_name")
+dr <- dr[,c("Description","feature")]
+fish_features <- table(dr)/rowSums(table(dr))
+fish_features <- fish_features[order(-fish_features[,1]),]
+
+Pathways <- ALL_GOs_hs[grep(common,ALL_GOs_hs$ID),c("Description","geneID")]
+colnames(Pathways) <- c("Pathway","geneID")
+df1 <- data.frame()
+for (i in 1:nrow(Pathways)){
+  
+  path <- Pathways[i,1]
+  genes <- str_split(Pathways[i,2],"\\/")
+  path <- rep(path,length(genes))
+  gene_GO_match <- data.frame(path,genes)
+  colnames(gene_GO_match) <- c("Pathway","geneID")
+  df1 <- rbind(df1,gene_GO_match)
+  
+}
+
+colnames(df1) <- c("Description","gene_name")
+
+
+Human_sub <- HURs_metafile_annotated[HURs_metafile_annotated$Mean_FCH_hs >= 2,]
+Human_sub <- Human_sub[grep("intron|3UTR", Human_sub$feature),c("gene_name","feature")] 
+hs <- merge(df1,Human_sub,by="gene_name")
+hs <- hs[,c("Description","feature")]
+human_features <- table(hs)/rowSums(table(hs))
+human_features <- human_features[rownames(fish_features),]
+
+
+intron_ratios <- fish_features[,2]/human_features[,2]
+
+
+#Plotting for each GO term the percentage of the binding frequency in fish intron versus the log2 ratio of fish intron percentage and human intron percentage. The top intronic binding site bearing GO
+#terms highlighted (green)
+
+par(bty="n")
+plot(log2(intron_ratios[intron_ratios<=2^1.75]), fish_features[intron_ratios<=2^1.75, 2]*100, 
+     ylim=c(0,100), 
+     xlim=c(-4.5,4.5), 
+     cex=3, 
+     pch=16, 
+     col=alpha("#B3B3B3"), 
+     las=1,
+     xlab="Pathway Intron Ratios log2(Dr/Hs)",
+     ylab="Pathway Intron % (Dr)")
+points(log2(intron_ratios[intron_ratios>2^1.75]), fish_features[intron_ratios>2^1.75, 2]*100,  
+       cex=3, 
+       pch=16, 
+       col=alpha("#197C41"), 
+       xaxt="n", 
+       yaxt="n")
+
+```
+
+Figure S4G, plotting the GO terms with enriched binding of drHUR in the introninc sites 
+```{r}
+par(mar=c(2,5,2,2), mfrow=c(1,2))
+barplot(t(human_features[intron_ratios>2^1.75,])*100, horiz=T, las=1, col=c("#DEEBF7", "#6E82A7"), space=0.05, yaxt  = "n" )
+barplot(t(fish_features[intron_ratios>2^1.75,])*100, horiz=T, las=1, col=c("#DEEBF7", "#6E82A7"), space=0.05)
+
+
+```
+
+```{r}
+sessionInfo()
+```
+
