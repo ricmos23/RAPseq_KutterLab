@@ -1,5 +1,5 @@
 ---
-title: "Figure4 RAPseq"
+title: "Figure6 RAPseq"
 author: Qun Li
 date: 2 Sep 2024 ( 10:40:08 )
 output:
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(collapse = TRUE)
 ## ENV settings
 ```{r env settings}
 ###
-# @Description: Figure4
+# @Description: Figure6
 # @Description: Adapted from https://github.com/IonutAtanasoai1/RAPseq
 # @Author: LiQun
 # @Email: qun.li@ki.se
