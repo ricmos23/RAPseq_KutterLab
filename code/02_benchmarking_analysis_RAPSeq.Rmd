@@ -1214,4 +1214,6 @@ barplot(CLIPs_RBFOX2_feature_count, col=greys[c(1,3,5,7)], las=3, space=0.05, yl
 barplot(RAPs_RBFOX2_feature_count, col=acqua_blues[c(1,4,7,11)], las=3, space=0.05, ylab="Fraction of Peaks")
 ```
 
-
+```{r sessionInfo}
+sessionInfo()
+```
