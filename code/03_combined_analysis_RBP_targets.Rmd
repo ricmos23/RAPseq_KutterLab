@@ -1,5 +1,5 @@
 ---
-title: 'Figure 6 - Combined analysis of cRBP & ncRBP targets'
+title: 'Figure 3 - Combined analysis of cRBP & ncRBP targets'
 author: 'Carlos Gallardo'
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -42,7 +42,7 @@ library(ggrepel)
 ```
 
 
-# Figure S6A - RBPome overlaps
+# Figure S3A - RBPome overlaps
 
 ```{r, fig.width=4, fig.height=4}
 # RBPomes
@@ -162,7 +162,7 @@ RBP_peaks <- rbind(cRBP_peaks %>% mutate(RBP_type = 'cRBP'),
 ```
 
 
-## Figure S6B - RBP binding sites
+## Figure S3B - RBP binding sites
 
 ```{r fig.width=4, fig.height=4}
 RBP_BS <- RBP_peaks %>% 
@@ -188,7 +188,7 @@ ggplot(RBP_BS, aes(x=RBP_type, y=n_sites, fill=RBP_type)) +
 ```
 
 
-## Figure S6C - RBP binding sites per RBP
+## Figure S3C - RBP binding sites per RBP
 
 ```{r, fig.width=9, fig.height=4}
 # get binding sites for each RBP
@@ -279,7 +279,7 @@ RBP_filt_peaks <- rbind(cRBP_filt_peaks %>% mutate(RBP_type = 'cRBP'),
 ```
 
 
-## Figure 6A - RBP target distribution
+## Figure 3A - RBP target distribution
 
 ```{r, fig.width=6, fig.height=6}
 # feature_colors <- brewer.pal(8, "Set3")
@@ -439,7 +439,7 @@ print(combined_plot)
 ```
 
 
-## Figure S6D - RBP binding sites per gene
+## Figure S3D - RBP binding sites per gene
 
 ```{r fig.width=4, fig.height=4}
 RBP_BS_per_gene_mean <- RBP_peaks %>% 
@@ -470,7 +470,7 @@ p
 ```
 
 
-## Figure S6E - RBP binding strength (downsampled)
+## Figure S3E - RBP binding strength (downsampled)
 
 ```{r fig.width=4, fig.height=4}
 RBP_FCH <- RBP_peaks
@@ -516,7 +516,7 @@ p
   
 ```
 
-## Figure S6F - Binding strength per RBP (downsampled)
+## Figure S3F - Binding strength per RBP (downsampled)
 
 ```{r fig.width=4.5, fig.height=4}
 RBP_filt_sorted_median_FCH <- RBP_filt_peaks %>% 
@@ -654,7 +654,7 @@ write.table(edges, file = "results/RBP_target_network_edges.txt", sep="\t", row.
 ```
 
 
-# Figure 6D - Analysis of RBP target network subsets
+# Figure 3D - Analysis of RBP target network subsets
 
 ## GO enrichment analysis of RBP target subsets
 
@@ -970,7 +970,7 @@ RBPKDs_ENCODE_DESeq2 <- readRDS("data/RBPKD/RBPKDs_ENCODE_filt_DESeq2.rds")
 ```
 
 
-## Figure S6G - Enrichment of RBP targets in RBPKD datasets by binding site distribution
+## Figure S3G - Enrichment of RBP targets in RBPKD datasets by binding site distribution
 
 ```{r}
 rbp_names <- list(
@@ -1145,7 +1145,7 @@ print(combined_plot)
 ```
 
 
-## Figure 6C - Enrichment of RBP target subsets in RBPKD datasets
+## Figure 3C - Enrichment of RBP target subsets in RBPKD datasets
 
 ```{r}
 # target subsets for PTBP1, RBFOX2, YBX3, STMN1. Both shared and unique.
@@ -1294,7 +1294,7 @@ print(combined_plot)
 ```
 
 
-## Figure S6H - Volcano plots of RBP target genes in RBPKD datasets
+## Figure S3H - Volcano plots of RBP target genes in RBPKD datasets
 
 ```{r, fig.width=8, fig.height=7}
 RBP_diff_expr <- list(
@@ -1491,7 +1491,7 @@ print(combined_plot)
 # SessionInfo
 
 ```{r}
-sessionInfo()
+utils::sessionInfo()
 
 ```
 
